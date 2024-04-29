@@ -6,6 +6,18 @@ import webbrowser
 url = "https://client-api-2-74b1891ee9f9.herokuapp.com/coins?offset=0&limit=50&sort=created_timestamp&order=DESC&includeNsfw=false"
 path_to_chrome = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s" # Your path to chrome
 # path_to_chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome %s"  # Path to Chrome on Mac
+processed_mints = []
+
+def setup(url):
+    # Fetch data from the API for initial setup
+    response = requests.get(url)
+    if response.status_code == 200:
+        coins = response.json()
+        # Process each coin and update processed_mints
+        for coin in coins:
+            processed_mints.append(coin['mint'])
+    else:
+        print(f"Failed to fetch data: HTTP {response.status_code}")
 
 def fetch_coin(url, first_run):
     # Handle file reading for processed mints
