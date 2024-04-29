@@ -15,13 +15,13 @@ To evaluate of a newly generated coin, the bot will analyze serval indicators.
 * Social Media presence. 
 The bot checks if the coin has a twitter or a telegram
 
-*  Offical Website Quality 
+*  Offical Website Quality. 
 The presence and quality of an offical website can lend credibilty to a coin. 
 
-* Market Uniqnes
+* Market Uniqnes.
 The bot will check if the coin is a duplicate of existing tokens
 
-* Early buying strategi
+* Early buying strategi.
 One of the key factor of a good trade is buying the coin at a low marketcap. This approach aims to capitalize on inital low prices before any potential surge in value. 
 
 * Auotomated Trading Decions
