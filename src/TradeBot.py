@@ -8,9 +8,9 @@ path_to_chrome = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s
 # path_to_chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome %s"  # Path to Chrome on Mac
 processed_mints = []  # This list will store the mints of the most recent 50 coins in new to old order
 
-def setup(url):
+def setup(inUrl):
     # Fetch data from the API for initial setup
-    response = requests.get(url)
+    response = requests.get(inUrl)
     if response.status_code == 200:
         coins = response.json()
         # Process each coin and update processed_mints
