@@ -19,9 +19,9 @@ def setup(inUrl):
     else:
         print(f"Failed to fetch data: HTTP {response.status_code}")
 
-def fetch_coin(url):
+def fetch_coin(inUrl):
     # Fetch data from the API for regular updates
-    response = requests.get(url)
+    response = requests.get(inUrl)
     if response.status_code == 200:
         new_mints = []
         coins = response.json()
