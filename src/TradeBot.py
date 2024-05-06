@@ -11,6 +11,7 @@ processed_mints = []  # This list will store the mints of the most recent 50 coi
 USERNAME = "4afy3nH4jZb3jA4MG1PgUfekkdJJdoTXcBLV6Axev54B" # You accounts username on pump.fun
 LAMPORTS_PER_SOL = 1_000_000_000
 session = None # Keep a constant session which will significantlly improve the api request timings
+num_bought_coins = 0
 
 def setup(url):
     """
@@ -64,7 +65,7 @@ def determine_buy(coin):
     # Add check if dev has sold
     twitter_check = coin['twitter'] and 'twitter.com' in coin['twitter']
     website_check = coin['website'] and coin['website'].startswith('https://') and all(site not in coin['website'] for site in ['twitter.com', 'telegram.org'])
-    return twitter_check and website_check
+    return twitter_check and website_check and num_bought_coins < 10
 
 def handle_bought_coin(coin):
     # Placeholder for buy and sell logic
@@ -72,6 +73,7 @@ def handle_bought_coin(coin):
     pump_fun_link = f"https://pump.fun/{coin['mint']}"
     webbrowser.get(path_to_chrome).open_new_tab(pump_fun_link)
     """ # Untill it is actually impemented
+    num_bought_coins += 1
     # Start a new thread to monitor selling criteria
     bought_market_cap = get_market_cap(coin['mint'])
     sell_thread = threading.Thread(target=monitor_and_sell, args=(coin, time.time(), bought_market_cap))
@@ -138,6 +140,7 @@ def handle_sold_coin(coin):
     # Actions to perform after a coin is sold.
     # Code to actually sell the coin
     sold = True
+    num_bought_coins -= 1
 
 def make_web_request(url, max_retries = 3):
     """ 
@@ -172,4 +175,5 @@ def main():
         # How often it should run. The website wont ever time-out on 1 sec intervall, but at no sleep it eventually throws HTTP 429
 
 if __name__ == '__main__':
+
     main()
