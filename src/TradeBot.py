@@ -10,13 +10,17 @@ path_to_chrome = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s
 processed_mints = []  # This list will store the mints of the most recent 50 coins in new to old order
 USERNAME = "4afy3nH4jZb3jA4MG1PgUfekkdJJdoTXcBLV6Axev54B" # You accounts username on pump.fun
 LAMPORTS_PER_SOL = 1_000_000_000
+session = None # Keep a constant session which will significantlly improve the api request timings
 
 def setup(url):
     """
     Fetch data from the API for initial setup and update processed mints.
+    Initialize the HTTP session for reuse.
     
     :param inUrl: The URL to fetch initial coin data from.
     """
+    global session
+    session = requests.Session()
     coins = make_web_request(url)
     if coins:
         # Process each coin and update processed_mints
@@ -57,6 +61,7 @@ def determine_buy(coin):
     # In the future check other criteria some of them below:
     # Keeping track of the founder and the fewer prevoiusly created coins are a big up
     # Potentially scraping the website to confirm the same token address
+    # Add check if dev has sold
     twitter_check = coin['twitter'] and 'twitter.com' in coin['twitter']
     website_check = coin['website'] and coin['website'].startswith('https://') and all(site not in coin['website'] for site in ['twitter.com', 'telegram.org'])
     return twitter_check and website_check
@@ -93,7 +98,7 @@ def monitor_and_sell(coin, purchase_time, bought_market_cap):
     """
     # Continue checking until the coin is sold
     while True:
-        if should_sell(coin['mint'], purchase_time, bought_market_cap):
+        if should_sell(coin, purchase_time, bought_market_cap):
             handle_sold_coin(coin)
             break  # Exit the loop once the coin is sold
         time.sleep(1)  # Check every 30 seconds, adjust frequency as needed
@@ -135,22 +140,24 @@ def handle_sold_coin(coin):
     sold = True
 
 def make_web_request(url, max_retries = 3):
-    """
-    Makes a web request and retries up to max_retries times if the request does not initially succeed.
+    """ 
+    Makes a web request using the initialized session and handles common errors.
     
     :param url: The URL to request.
-    :param max_retries: The maximum number of retries. 3 if not otherwise provided
-    :return: The JSON response data if successful, or None if the request fails after all retries.
+    :return: The JSON response data if successful, or None if the request fails.
     """
     retry_count = 0
     while retry_count < max_retries:
-        response = requests.get(url)
-        if response.status_code == 200:
+        try:
+            response = session.get(url)
+            response.raise_for_status()  # Raises HTTPError for bad requests (4XX, 5XX)
             return response.json()
-        else:
-            print(f"Failed to fetch data: HTTP {response.status_code}, retrying...")
-            retry_count += 1
-            time.sleep(1)  # Adjust sleep as necessary based on API limitations or performance considerations
+        except requests.HTTPError as e:
+            print(f"HTTP error: {e} - Status code: {response.status_code}")
+        except requests.RequestException as e:
+            print(f"Request failed: {e}")
+        retry_count += 1
+        time.sleep(0)  # Adjust based on the API's rate limiting
     print("Maximum retries reached, failed to fetch data.")
     return None
 
@@ -161,7 +168,7 @@ def main():
         request_count += 1
         print(f"New request {request_count}\n")
         fetch_coin(coins_url)
-        time.sleep(1)
+        time.sleep(0)
         # How often it should run. The website wont ever time-out on 1 sec intervall, but at no sleep it eventually throws HTTP 429
 
 if __name__ == '__main__':
