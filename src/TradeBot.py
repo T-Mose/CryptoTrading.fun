@@ -3,7 +3,7 @@ import time
 import webbrowser
 
 # Global Variables
-url = "https://client-api-2-74b1891ee9f9.herokuapp.com/coins?offset=0&limit=50&sort=created_timestamp&order=DESC&includeNsfw=false"
+url = "https://client-api-2-74b1891ee9f9.herokuapp.com/coins?offset=0&limit=5&sort=created_timestamp&order=DESC&includeNsfw=false"
 path_to_chrome = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s" # Your path to chrome
 # path_to_chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome %s"  # Path to Chrome on Mac
 processed_mints = []  # This list will store the mints of the most recent 50 coins in new to old order
@@ -36,7 +36,7 @@ def fetch_coin(url):
         # Prepend new mints to keep the list ordered new to old
         processed_mints[:0] = new_mints
         # Keep only the latest 50 entries
-        processed_mints[:] = processed_mints[:50]
+        processed_mints[:] = processed_mints[:5]
 
     else:
         print(f"Failed to fetch data: HTTP {response.status_code}")
@@ -64,7 +64,7 @@ def main():
         request_count += 1
         print(f"New request {request_count}\n")
         fetch_coin(url)
-        time.sleep(0)
+        time.sleep(1)
         # How often it should run. The website wont ever time-out on 1 sec intervall, but at no sleep it eventually throws HTTP 429
 
 if __name__ == '__main__':
