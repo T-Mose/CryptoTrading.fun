@@ -10,6 +10,7 @@ path_to_chrome = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s
 processed_mints = []  # This list will store the mints of the most recent 50 coins in new to old order
 USERNAME = "4afy3nH4jZb3jA4MG1PgUfekkdJJdoTXcBLV6Axev54B" # You accounts username on pump.fun
 LAMPORTS_PER_SOL = 1_000_000_000
+# HTTP session
 session = None # Keep a constant session which will significantlly improve the api request timings
 num_bought_coins = 0
 

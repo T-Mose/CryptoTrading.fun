@@ -27,6 +27,14 @@ One of the key factor of a good trade is buying the coin at a low marketcap. Thi
 * Auotomated Trading Decions
 Based on the criteria mentioned before, the bot will automatically execute buy och sell decisions. 
 
+## How to run the project
+.......
+
+## 
+
+
+
+
 
 
 
