@@ -14,11 +14,7 @@ LAMPORTS_PER_SOL = 1_000_000_000
 session = None # Keep a constant session which will significantlly improve the api request timings
 num_bought_coins = 0
 
-#Importing Selenium Models
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
+
 
 
 def setup(url):
