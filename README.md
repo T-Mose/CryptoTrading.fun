@@ -28,8 +28,8 @@ One of the key factor of a good trade is buying the coin at a low marketcap. Thi
 Based on the criteria mentioned before, the bot will automatically execute buy och sell decisions. 
 
 ## How to run the project
-To run the project you need `api key`, `password` and an account on telegram and add the bot `@PlonkBot_bot`. You can also use this referal link for telegram `https://t.me/PlonkBot_bot?start=r_c04fdb19d6`. 
-To run the project you simply run the class `Tradbot.py`.
+To run the project you need telegram developer `api id`  `api hash`, `username` and an account on telegram and add the bot `@PlonkBot_bot`. You can also use this referal link for telegram `https://t.me/PlonkBot_bot?start=r_c04fdb19d6`. 
+To run the project you simply run the class `Tradbot.py`. All tha information should be stored in the empty .env file which is secur and should never see github.
 
 ## 
 
