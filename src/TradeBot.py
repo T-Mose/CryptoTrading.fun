@@ -1,3 +1,4 @@
+import os
 import threading
 import requests
 import time
@@ -24,6 +25,10 @@ def setup(url):
     
     :param inUrl: The URL to fetch initial coin data from.
     """
+    api_id = os.getenv('API_ID', '')  # Default to empty string if not set
+    api_hash = os.getenv('API_HASH', '')
+    user_name = os.getenv('USER_NAME', '')
+    phone_number = os.getenv('PHONE_NUMBER', '')
     global session
     session = requests.Session()
     coins = make_web_request(url)
