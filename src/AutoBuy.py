@@ -1,43 +1,40 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.options import Options
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
+from telethon import TelegramClient, events, sync
 
+# Your Telegram API ID and hash (replace these with your actual values)
+api_id = 'your_api_id'
+api_hash = 'your_api_hash'
+#The username of the Telegram bot to which commands are sent
+bot_username = 'bot_username'
 
+#Create and start the Telegram client session
+client = TelegramClient('anon', api_id, api_hash)
 
+async def send_buy_command(mint_address):
+    """
+    Sends a buy command to a specific Telegram bot.
 
+    :param mint_address: The mint address of the coin to buy.
+    """
+    await client.start()
+    await client.send_message(bot_username, f'/buy {mint_address}')
+    print(f"Sent buy command for: {mint_address}")
 
-def handle_bought_coin(coin):
-    pump_fun_link = f"https://pump.fun/{coin['mint']}"
+def buy_coin(coin_mint):
+    """
+    Initiates the purchase of a coin by sending a command to a Telegram bot.
+
+    :param coin_mint: The unique identifier for the coin to be bought.
+    """
+    print(f"Attempting to buy coin with mint address: {coin_mint}")
+    # Running the async function using the Telethon client's event loop
+    client.loop.run_until_complete(send_buy_command(coin_mint))
+
+#Example usage and test; comment this out when using this script as a module
+#buy_coin('123abc456def')
+
+#tedde6489
+#tedde6489
+
     
-    # Configure Chrome options
-    options = Options()
-    options.add_experimental_option("detach", True)
 
-    # Set up ChromeDriver
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-    try:
-        # Open the pump.fun link
-        driver.get(pump_fun_link)
-        
-        # Maximize window
-        driver.maximize_window()
-
-        # Explicitly wait for the "1 sol" button to be clickable
-        button_1_sol = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'flex flex-col')]//button[text()='1 sol']")))
-        button_1_sol.click()
-
-        # Explicitly wait for the "inline-flex" button to be clickable
-        button_inline_flex = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "inline-flex")))
-        button_inline_flex.click()
-    
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-
-    finally:
-        # Close the WebDriver instance
-        driver.quit()
