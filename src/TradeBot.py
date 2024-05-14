@@ -3,20 +3,26 @@ import threading
 import requests
 import time
 import webbrowser
+from telethon import TelegramClient, events, sync
 
+# Your Telegram API ID and hash
+api_id = os.getenv('API_ID', 'your_api_id')  # Default to your_api_id if not set
+api_hash = os.getenv('API_HASH', 'your_api_hash')
+user_name = os.getenv('USER_NAME', '')
+phone_number = os.getenv('PHONE_NUMBER', '')
+bot_username = 'bot_username'
 # Global Variables
 coins_url = "https://client-api-2-74b1891ee9f9.herokuapp.com/coins?offset=0&limit=5&sort=created_timestamp&order=DESC&includeNsfw=false"
 path_to_chrome = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s" # Your path to chrome
 # path_to_chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome %s"  # Path to Chrome on Mac
 processed_mints = []  # This list will store the mints of the most recent 50 coins in new to old order
-USERNAME = "4afy3nH4jZb3jA4MG1PgUfekkdJJdoTXcBLV6Axev54B" # You accounts username on pump.fun
 LAMPORTS_PER_SOL = 1_000_000_000
+num_bought_coins = 0
+thread_flags = {}
 # HTTP session
 session = None # Keep a constant session which will significantlly improve the api request timings
-num_bought_coins = 0
-
-
-
+# Telegram client
+client = TelegramClient('anon', api_id, api_hash)
 
 def setup(url):
     """
@@ -25,11 +31,7 @@ def setup(url):
     
     :param inUrl: The URL to fetch initial coin data from.
     """
-    api_id = os.getenv('API_ID', '')  # Default to empty string if not set
-    api_hash = os.getenv('API_HASH', '')
-    user_name = os.getenv('USER_NAME', '')
-    phone_number = os.getenv('PHONE_NUMBER', '')
-    global session
+    global session, client
     session = requests.Session()
     coins = make_web_request(url)
     if coins:
@@ -65,7 +67,6 @@ def fetch_coin(url):
         print("Failed to fetch coin data.")
         return False
 
-
 def determine_buy(coin):
     # Check Twitter and website criteria
     # In the future check other criteria some of them below:
@@ -81,10 +82,12 @@ def handle_bought_coin(coin):
     # Currently, just opens a new tab
     pump_fun_link = f"https://pump.fun/{coin['mint']}"
     webbrowser.get(path_to_chrome).open_new_tab(pump_fun_link)
+    bought_market_cap = get_market_cap(coin['mint'])
     """ # Untill it is actually impemented
+    client.loop.run_until_complete(send_telegram_command(coin['mint'], 'buy'))
     num_bought_coins += 1
     # Start a new thread to monitor selling criteria
-    bought_market_cap = get_market_cap(coin['mint'])
+    thread_flags[coin['mint']] = True
     sell_thread = threading.Thread(target=monitor_and_sell, args=(coin, time.time(), bought_market_cap))
     sell_thread.start()
     """
@@ -108,7 +111,7 @@ def monitor_and_sell(coin, purchase_time, bought_market_cap):
     Continuously monitors a coin to decide if it should be sold.
     """
     # Continue checking until the coin is sold
-    while True:
+    while thread_flags[coin['mint']]:  # Check the flag
         if should_sell(coin, purchase_time, bought_market_cap):
             handle_sold_coin(coin)
             break  # Exit the loop once the coin is sold
@@ -148,8 +151,9 @@ def dev_has_sold(coin):
 def handle_sold_coin(coin):
     # Actions to perform after a coin is sold.
     # Code to actually sell the coin
-    sold = True
+    client.loop.run_until_complete(send_telegram_command(coin['mint'], 'sell'))
     num_bought_coins -= 1
+    thread_flags[coin['mint']] = False  # Set the flag to False to stop the thread
 
 def make_web_request(url, max_retries = 3):
     """ 
@@ -172,6 +176,16 @@ def make_web_request(url, max_retries = 3):
         time.sleep(0)  # Adjust based on the API's rate limiting
     print("Maximum retries reached, failed to fetch data.")
     return None
+async def send_telegram_command(mint_address, command):
+    """
+    Sends a command to the Telegram bot.
+    
+    :param mint_address: The mint address of the coin.
+    :param command: 'buy' or 'sell'
+    """
+    command_text = f'/{command} {mint_address}'
+    await client.send_message(bot_username, command_text)
+    print(f"Sent {command} command for: {mint_address}")
 
 def main():
     request_count = 0
@@ -183,7 +197,5 @@ def main():
         time.sleep(0)
         # How often it should run. The website wont ever time-out on 1 sec intervall, but at no sleep it eventually throws HTTP 429
 
-
 if __name__ == '__main__':
-
     main()
