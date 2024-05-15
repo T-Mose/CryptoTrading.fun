@@ -1,17 +1,13 @@
 import asyncio
 import aiohttp
 import os
-import threading
-import requests
-import time
-import webbrowser
-from telethon import TelegramClient, events, sync
+from telethon import TelegramClient
 from dotenv import load_dotenv
 
 # Load environment variables from user_info.env
 load_dotenv('user_info.env')
 
-# Your Telegram API ID and hash
+# Your Telegram API ID and hash that is pulled from the encrypted file
 api_id = os.getenv('API_ID', '')  # Default to your_api_id if not set
 api_hash = os.getenv('API_HASH', '')
 user_name = os.getenv('USER_NAME', '')
@@ -49,8 +45,10 @@ async def setup(url):
 
 # Define the function to set up the Telegram client
 async def setup_telegram_client():
+    """
+    Asynchronously sets up and starts a Telegram client session.
+    """
     client = TelegramClient('session_name', api_id, api_hash)
-
     # Start the client and sign in automatically
     await client.start(phone=lambda: phone_number)
     print("Client is started and connected.")
@@ -83,31 +81,32 @@ async def fetch_coin(url):
         return False
 
 def determine_buy(coin):
-    # Check Twitter and website criteria
-    # In the future check other criteria some of them below:
-    # Keeping track of the founder and the fewer prevoiusly created coins are a big up
-    # Potentially scraping the website to confirm the same token address
-    # Add check if dev has sold
+    """
+    Determines whether to buy a coin based on specific criteria.
+    
+    Checks the coin's Twitter and website validity as well as the number of coins already bought.
+    
+    :param coin: A dictionary containing details of the coin.
+    :return: Boolean indicating whether the coin meets the buying criteria.
+    """
     twitter_check = coin['twitter'] and 'twitter.com' in coin['twitter']
     website_check = coin['website'] and coin['website'].startswith('https://') and all(site not in coin['website'] for site in ['twitter.com', 'telegram.org'])
-    return twitter_check and website_check and num_bought_coins < 1
+    return twitter_check and website_check and num_bought_coins < 10
 
 async def handle_bought_coin(coin):
+    """
+    Handles the purchase process for a coin, updates the number of coins bought, and initiates monitoring.
+    
+    This function fetches the market cap of the coin, sends a buy command via Telegram, 
+    and starts an asynchronous task to monitor the coin for selling conditions.
+    
+    :param coin: A dictionary containing details of the coin to be bought.
+    """
     global num_bought_coins  # Declare that we use the global variable
-    # Placeholder for buy and sell logic
-    # Currently, just opens a new tab
-    pump_fun_link = f"https://pump.fun/{coin['mint']}"
-    # webbrowser.get(path_to_chrome).open_new_tab(pump_fun_link)
     bought_market_cap = await get_market_cap(coin['mint'])
     print("Bought: " + coin['mint'] + " at the MC: " + str(bought_market_cap))
     num_bought_coins += 1
-    # Untill it is actually impemented
     await send_telegram_command(coin['mint'], 'buy')
-    # Start a new thread to monitor selling criteria
-    # thread_flags[coin['mint']] = True
-    # sell_thread = threading.Thread(target=monitor_and_sell, args=(coin, time.time(), bought_market_cap))
-    # sell_thread.start()
-     # Asynchronously monitor and sell the coin using asyncio's task creation
     asyncio.create_task(monitor_and_sell(coin, asyncio.get_running_loop().time(), await get_market_cap(coin['mint'])))
 
 async def get_market_cap(coin_mint):
@@ -137,7 +136,9 @@ async def monitor_and_sell(coin, purchase_time, bought_market_cap):
 
 async def should_sell(coin, purchase_time, bought_market_cap):
     """
-    Determines if the bought coin should be sold based on criteria.
+    Determines if the bought coin should be sold based on criteria.'
+
+    :return: If the given coin should be sold.
     """
     current_time = asyncio.get_running_loop().time()
     current_market_cap = await get_market_cap(coin['mint'])
@@ -170,14 +171,31 @@ async def dev_has_sold(coin):
     return False
 
 async def handle_sold_coin(coin):
+    """
+    Executes actions required after selling a coin, updates global count, and stops monitoring.
+    
+    Sends a sell command via Telegram, decrements the count of currently bought coins, 
+    and disables the monitoring flag for the specified coin to stop the monitoring thread.
+    
+    :param coin: A dictionary containing details of the coin that has been sold.
+    """
     global num_bought_coins  # Declare that we use the global variable
-    # Actions to perform after a coin is sold.
-    # Code to actually sell the coin
     await send_telegram_command(coin['mint'], 'sell')
-    num_bought_coins -= 1
+    num_bought_coins -= 1 # Update the number of currently owned coins
     thread_flags[coin['mint']] = False  # Set the flag to False to stop the thread
 
 async def make_web_request(url, max_retries=3):
+    """
+    Attempts to make an HTTP GET request to the specified URL with retries on failure.
+    
+    This function tries to fetch data from a given URL using an asynchronous HTTP session. 
+    If the request fails due to client or server errors, it retries up to `max_retries` times.
+    Each retry is attempted after a 1-second delay.
+    
+    :param url: The URL to make the web request to.
+    :param max_retries: The maximum number of retries if the request fails (default is 3).
+    :return: The JSON response as a dictionary if the request is successful, otherwise None.
+    """
     retry_count = 0
     while retry_count < max_retries:
         try:
@@ -207,6 +225,17 @@ async def send_telegram_command(mint_address, command):
     print(f"Sent {command} command for: {mint_address}")
 
 async def main():
+    """
+    The main execution function for the cryptocurrency trading bot.
+
+    This function initializes the trading system, then continuously fetches and processes new coin data in an infinite loop.
+    It manages request pacing to avoid hitting rate limits (HTTP 429 errors) by pausing for one second between each request.
+    
+    - Initializes the system by setting up the Telegram client and fetching initial coin data.
+    - Enters an infinite loop, making successive API requests to fetch new coin data.
+    - Handles each new coin by determining buy eligibility and possibly buying the coin.
+    - Ensures a manageable request rate to the API to avoid server-side rate limiting.
+    """
     request_count = 0
     await setup(coins_url)  # Initial setup to prepare the system
     while True:
@@ -217,4 +246,4 @@ async def main():
         # How often it should run. The website wont ever time-out on 1 sec intervall, but at no sleep it eventually throws HTTP 429
 
 if __name__ == '__main__':
-    asyncio.run(main())  # Proper way to run the main function
+    asyncio.run(main())  # To indicate that this is a true script?
