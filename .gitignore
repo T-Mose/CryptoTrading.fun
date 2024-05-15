@@ -1,5 +1,2 @@
-# Ignore specific sensitive information
-API_ID=
-API_HASH=
-USER_NAME=
-PHONE_NUMBER=
+# Ignore environment secrets
+.env
